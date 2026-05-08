@@ -7,10 +7,9 @@ import { useState, useRef, useEffect, ReactNode, ChangeEvent } from 'react';
 import { 
   Database, 
   MessageSquare, 
-  Settings, 
-  Plus, 
-  Bell, 
-  User, 
+  Settings,
+  Plus,
+  User,
   Sparkles, 
   Send, 
   UploadCloud, 
@@ -19,8 +18,7 @@ import {
   Check,
   Search,
   FileText,
-  ChevronRight,
-  ShieldCheck
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -183,7 +181,6 @@ export default function App() {
                 </div>
                 <div>
                   <h1 className="text-xl font-display font-bold text-brand-cyan tracking-tight leading-none">DocWhisperer</h1>
-                  <span className="text-[10px] font-mono text-on-surface-variant opacity-60">V1.0.42-STABLE</span>
                 </div>
               </div>
 
@@ -194,24 +191,59 @@ export default function App() {
               </button>
             </div>
 
-            <div className="flex-1 px-3 space-y-1">
+            <div className="px-3 space-y-1">
               <SidebarItem icon={<MessageSquare size={18} />} label="Chat" active />
               <SidebarItem icon={<Database size={18} />} label="Knowledge Base" />
               <SidebarItem icon={<Settings size={18} />} label="Settings" />
             </div>
 
+            {/* Sources in Use — populates as the user uploads documents via /ingest. */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pt-4 pb-2 mt-2 border-t border-white/5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[10px] font-mono font-bold text-on-surface-variant opacity-50 uppercase tracking-widest">Sources in Use</span>
+                <span className="text-[10px] font-mono text-brand-cyan">{sources.length} Total</span>
+              </div>
+              <div className="space-y-2">
+                {sources.map(src => (
+                  <div key={src.id} className={`group p-3 rounded-lg glass-panel transition-all hover:border-brand-cyan/40 cursor-pointer ${src.isMain ? 'border-l-2 border-l-brand-cyan' : 'border-l-2 border-l-brand-cyan/20'}`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold truncate group-hover:text-brand-cyan transition-colors">{src.name}</p>
+                        <p className="text-[10px] font-mono opacity-50 mt-1">{src.type} • {src.size}</p>
+                      </div>
+                      <ChevronRight size={14} className="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Token Usage bar — placeholder values until /query starts returning usage. */}
+            <div className="px-4 py-3 border-t border-white/5">
+              <div className="flex items-center justify-between text-[10px] font-mono mb-2">
+                <span className="text-on-surface-variant">TOKEN USAGE</span>
+                <span className="text-brand-cyan">1.2k / 128k</span>
+              </div>
+              <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: '15%' }}
+                  className="h-full bg-brand-cyan glow-cyan"
+                />
+              </div>
+            </div>
+
             <div className="p-4 border-t border-white/5 bg-black/20">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-brand-cyan/10 border border-brand-cyan/20 flex items-center justify-center overflow-hidden">
-                  <img 
-                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" 
-                    alt="User" 
+                  <img
+                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex"
+                    alt="User"
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">Alex Rivera</p>
-                  <p className="text-[10px] font-mono text-on-surface-variant opacity-60 uppercase tracking-wider">Lead Architect</p>
+                  <p className="text-sm font-semibold truncate">User</p>
                 </div>
               </div>
             </div>
@@ -244,8 +276,6 @@ export default function App() {
           
           <div className="flex items-center gap-2">
             <HeaderAction icon={<Search size={20} />} />
-            <HeaderAction icon={<Bell size={20} />} />
-            <HeaderAction icon={<Settings size={20} />} />
           </div>
         </header>
 
@@ -428,84 +458,6 @@ export default function App() {
         </div>
       </main>
 
-      {/* Right Panels (Active Context) */}
-      <aside className="hidden lg:flex flex-col w-80 bg-brand-surface border-l border-white/10 h-full">
-        <div className="p-5 border-b border-white/10">
-          <h3 className="text-[11px] font-display font-bold text-brand-cyan uppercase tracking-[0.2em] mb-1">Active Context</h3>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-5 space-y-8 custom-scrollbar">
-          {/* Sources Section */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-mono font-bold text-on-surface-variant opacity-50 uppercase tracking-widest">Sources in Use</span>
-              <span className="text-[10px] font-mono text-brand-cyan">{sources.length} Total</span>
-            </div>
-            <div className="space-y-3">
-              {sources.map(src => (
-                <div key={src.id} className={`group p-3 rounded-lg glass-panel transition-all hover:border-brand-cyan/40 cursor-pointer ${src.isMain ? 'border-l-2 border-l-brand-cyan' : 'border-l-2 border-l-brand-cyan/20'}`}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold truncate group-hover:text-brand-cyan transition-colors">{src.name}</p>
-                      <p className="text-[10px] font-mono opacity-50 mt-1">{src.type} • {src.size}</p>
-                    </div>
-                    <ChevronRight size={14} className="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Visualization Section */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-mono font-bold text-on-surface-variant opacity-50 uppercase tracking-widest">Knowledge Graph</span>
-            </div>
-            <div className="relative aspect-square rounded-2xl glass-panel overflow-hidden group cursor-crosshair">
-              <img 
-                src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&q=80&w=800" 
-                alt="Visualization"
-                className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-1000 grayscale group-hover:grayscale-0"
-              />
-              <div className="absolute inset-0 bg-brand-bg/40 flex flex-col justify-end p-4">
-                <div className="flex items-center gap-1.5 text-brand-cyan mb-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
-                  <span className="text-[10px] font-display font-bold uppercase tracking-widest">Live Analysis</span>
-                </div>
-                <p className="text-[11px] text-on-surface-variant leading-tight">Cluster analysis of retrieved snippets in high-dimensional vector space.</p>
-              </div>
-            </div>
-          </section>
-
-          {/* Verification Section */}
-          <section>
-            <div className="p-4 rounded-xl glass-panel bg-brand-cyan/5 border-dashed space-y-3">
-              <div className="flex items-center gap-2 text-brand-cyan">
-                <ShieldCheck size={16} />
-                <span className="text-[10px] font-display font-bold uppercase tracking-widest">Verification Passed</span>
-              </div>
-              <p className="text-[11px] text-on-surface-variant italic leading-relaxed">
-                "...the hierarchical structure of HNSW allows for logarithmic search complexity by traversing layers of decreasing density..."
-              </p>
-            </div>
-          </section>
-        </div>
-
-        {/* Footer Statistics */}
-        <div className="p-5 border-t border-white/5 bg-black/20">
-          <div className="flex items-center justify-between text-[10px] font-mono mb-2">
-            <span className="text-on-surface-variant">TOKEN USAGE</span>
-            <span className="text-brand-cyan">1.2k / 128k</span>
-          </div>
-          <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-            <motion.div 
-              initial={{ width: 0 }}
-              animate={{ width: '15%' }}
-              className="h-full bg-brand-cyan glow-cyan"
-            />
-          </div>
-        </div>
-      </aside>
     </div>
   );
 }

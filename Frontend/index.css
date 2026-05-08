@@ -44,6 +44,12 @@
   }
 }
 
+/* Shrink rem-based sizes to 90%. Better than `zoom` because vh-based heights
+   (e.g. h-screen) still measure against the real viewport — no bottom gap. */
+:root {
+  font-size: 90%;
+}
+
 body {
   background-color: var(--color-brand-bg);
   color: #dae2fd;
