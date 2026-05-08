@@ -131,16 +131,29 @@ def build_prompt_messages(query: str, chunks: List[Document]) -> List[BaseMessag
 
 # --- Step 4: call the LLM --------------------------------------------------
 
-def generate_answer(messages: List[BaseMessage]) -> str:
+def generate_answer(messages: List[BaseMessage]) -> tuple[str, dict]:
     """
-    Send the prompt to the chat model and return the plain-text answer.
+    Send the prompt to the chat model and return the plain-text answer
+    plus a token-usage dict pulled off the response.
+
+    Usage shape: {"input_tokens": int, "output_tokens": int, "total_tokens": int}.
+    Falls back to zeros if the provider didn't include usage metadata.
     """
     print(f"[query]   -> calling {CHAT_MODEL} ...")
     chat = ChatOpenAI(model=CHAT_MODEL, temperature=TEMPERATURE)
     response = chat.invoke(messages)
     # response.content is typed str | list — for OpenAI text completions
     # it's always a string, but cast defensively.
-    return str(response.content).strip()
+    answer = str(response.content).strip()
+
+    raw_usage = getattr(response, "usage_metadata", None) or {}
+    usage = {
+        "input_tokens": int(raw_usage.get("input_tokens", 0)),
+        "output_tokens": int(raw_usage.get("output_tokens", 0)),
+        "total_tokens": int(raw_usage.get("total_tokens", 0)),
+    }
+    print(f"[query]   -> usage: {usage}")
+    return answer, usage
 
 
 # --- Public entry point ----------------------------------------------------
@@ -149,12 +162,15 @@ def answer_query(query: str) -> dict:
     """
     End-to-end: retrieve relevant chunks, ask the LLM, return answer + sources.
 
-    Returns {"answer": str, "sources": list[str]} — this matches the contract
-    the React frontend expects (see Frontend/App.tsx handleSend).
+    Returns {"answer": str, "sources": list[str], "usage": {...}} — this matches
+    the contract the React frontend expects (see Frontend/App.tsx handleSend).
+    `usage` carries chat-completion token counts; embeddings (ingest-time) are
+    not tracked here.
     """
+    empty_usage = {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
     query = query.strip()
     if not query:
-        return {"answer": "Please ask a non-empty question.", "sources": []}
+        return {"answer": "Please ask a non-empty question.", "sources": [], "usage": empty_usage}
 
     print(f"[query] Answering: {query!r}")
     chunks = retrieve_chunks(query)
@@ -172,12 +188,13 @@ def answer_query(query: str) -> dict:
         return {
             "answer": "No documents have been ingested yet — upload one first using POST /ingest.",
             "sources": [],
+            "usage": empty_usage,
         }
 
     messages = build_prompt_messages(query, chunks)
-    answer = generate_answer(messages)
+    answer, usage = generate_answer(messages)
     print(f"[query] DONE (sources: {seen_sources})")
-    return {"answer": answer, "sources": seen_sources}
+    return {"answer": answer, "sources": seen_sources, "usage": usage}
 
 
 # --- CLI -------------------------------------------------------------------

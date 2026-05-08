@@ -6,8 +6,7 @@
 import { useState, useRef, useEffect, ReactNode, ChangeEvent } from 'react';
 import { 
   Database, 
-  MessageSquare, 
-  Settings,
+  MessageSquare,
   Plus,
   User,
   Sparkles, 
@@ -36,6 +35,12 @@ function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+// Format a raw token count like 12347 as "12.3k" — keeps the sidebar label tidy.
+function formatTokens(n: number) {
+  if (n < 1000) return `${n}`;
+  return `${(n / 1000).toFixed(1)}k`;
 }
 
 // Types
@@ -76,6 +81,10 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   // Whether the "New Session" confirmation modal is open.
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  // Cumulative chat-completion tokens used in this session. Reset on /reset.
+  // Embeddings (ingest) are NOT counted — LangChain's wrapper hides them and
+  // they're ~125x cheaper than chat tokens.
+  const [tokenUsage, setTokenUsage] = useState(0);
 
   // Hidden <input type="file"> reference — the styled "ADD DOCUMENT" button triggers it.
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -105,7 +114,11 @@ export default function App() {
         body: JSON.stringify({ query: trimmed }),
       });
       if (!res.ok) throw new Error(`Backend returned ${res.status}`);
-      const data = (await res.json()) as { answer?: string; sources?: string[] };
+      const data = (await res.json()) as {
+        answer?: string;
+        sources?: string[];
+        usage?: { total_tokens?: number };
+      };
 
       // 3. Append the assistant's reply.
       const assistantMessage: Message = {
@@ -116,6 +129,10 @@ export default function App() {
         timestamp: nowHHMM(),
       };
       setChatMessages(prev => [...prev, assistantMessage]);
+      // Accumulate token usage for the session-usage indicator in the sidebar.
+      if (data.usage?.total_tokens) {
+        setTokenUsage(prev => prev + (data.usage?.total_tokens ?? 0));
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
       setError(`Query failed: ${msg}. Is the FastAPI backend running at ${API_URL}?`);
@@ -176,6 +193,7 @@ export default function App() {
       if (!res.ok) throw new Error(`Backend returned ${res.status}`);
       setChatMessages([]);
       setSources([]);
+      setTokenUsage(0);
       setShowResetConfirm(false);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
@@ -219,8 +237,6 @@ export default function App() {
 
             <div className="px-3 space-y-1">
               <SidebarItem icon={<MessageSquare size={18} />} label="Chat" active />
-              <SidebarItem icon={<Database size={18} />} label="Knowledge Base" />
-              <SidebarItem icon={<Settings size={18} />} label="Settings" />
             </div>
 
             {/* Sources in Use — populates as the user uploads documents via /ingest. */}
@@ -244,16 +260,18 @@ export default function App() {
               </div>
             </div>
 
-            {/* Token Usage bar — placeholder values until /query starts returning usage. */}
+            {/* Token Usage bar — cumulative chat-completion tokens for this session.
+                The 100k denominator is just a soft visual reference (real spend
+                is governed by your OpenAI billing limits, not anything here). */}
             <div className="px-4 py-3 border-t border-white/5">
               <div className="flex items-center justify-between text-[10px] font-mono mb-2">
                 <span className="text-on-surface-variant">TOKEN USAGE</span>
-                <span className="text-brand-cyan">1.2k / 128k</span>
+                <span className="text-brand-cyan">{formatTokens(tokenUsage)} / 100k</span>
               </div>
               <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
                 <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: '15%' }}
+                  animate={{ width: `${Math.min(100, (tokenUsage / 100000) * 100)}%` }}
+                  transition={{ duration: 0.5 }}
                   className="h-full bg-brand-cyan glow-cyan"
                 />
               </div>
