@@ -56,19 +56,23 @@ EMBEDDING_MODEL = "text-embedding-3-small"
 
 # --- Step 1: load the file -------------------------------------------------
 
-def load_document(file_path: str) -> List[Document]:
+def load_document(file_path: str, source_name: str | None = None) -> List[Document]:
     """
     Read a single file off disk and return its text as LangChain Documents.
 
-    Picks the right loader based on file extension. Stamps the source
-    filename onto each document's metadata so we can cite it later.
+    Picks the right loader based on file extension. Stamps `source_name`
+    (or the file's basename if None) onto each document's metadata so we
+    can cite it later. The override exists because the FastAPI /ingest
+    endpoint writes uploads to a temp file — without it, citations would
+    show "tmp42j8vvk2.docx" instead of "Progress.docx".
     """
     path = Path(file_path)
     if not path.is_file():
         raise FileNotFoundError(f"File does not exist: {path}")
 
     suffix = path.suffix.lower()
-    print(f"[ingest] Loading {path.name} ({suffix}) ...")
+    display_name = source_name or path.name
+    print(f"[ingest] Loading {display_name} ({suffix}) ...")
 
     if suffix == ".pdf":
         loader = PyPDFLoader(str(path))
@@ -84,7 +88,7 @@ def load_document(file_path: str) -> List[Document]:
         with open(path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
         text = json.dumps(data, indent=2, ensure_ascii=False)
-        docs = [Document(page_content=text, metadata={"source": path.name})]
+        docs = [Document(page_content=text, metadata={"source": display_name})]
         print(f"[ingest]   -> got 1 raw document(s) from JSON ({len(text)} chars)")
         return docs
     else:
@@ -94,10 +98,11 @@ def load_document(file_path: str) -> List[Document]:
         )
 
     docs = loader.load()
-    # Tag each chunk with the source filename so the frontend can show
-    # citations like "[Vector_Arch_2024.pdf]".
+    # Overwrite (not setdefault) — most LangChain loaders pre-stamp `source`
+    # with the *full file path*, which for our temp-file flow is exactly the
+    # value we need to replace.
     for d in docs:
-        d.metadata.setdefault("source", path.name)
+        d.metadata["source"] = display_name
 
     print(f"[ingest]   -> got {len(docs)} raw document(s) from loader")
     return docs
@@ -150,18 +155,22 @@ def store_chunks(chunks: List[Document]) -> Chroma:
 
 # --- Public entry point ---------------------------------------------------
 
-def ingest_file(file_path: str) -> dict:
+def ingest_file(file_path: str, source_name: str | None = None) -> dict:
     """
     Run the full pipeline (load -> chunk -> embed -> store) for one file.
+
+    `source_name` overrides the citation label baked into chunk metadata —
+    used by the API to keep the user-facing filename intact when ingesting
+    from a temp upload path.
 
     Returns a summary dict so callers (the FastAPI /ingest endpoint, the
     CLI below) can report back to the user.
     """
-    docs = load_document(file_path)
+    docs = load_document(file_path, source_name=source_name)
     chunks = chunk_documents(docs)
     store_chunks(chunks)
     return {
-        "filename": Path(file_path).name,
+        "filename": source_name or Path(file_path).name,
         "raw_documents": len(docs),
         "chunks": len(chunks),
     }

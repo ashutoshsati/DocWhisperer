@@ -82,7 +82,9 @@ async def ingest(file: UploadFile = File(...)):
         tmp.close()
 
         try:
-            summary = ingest_file(tmp.name)
+            # Pass the original filename so chunk metadata (and the response)
+            # cite "Progress.docx", not the tempfile basename.
+            summary = ingest_file(tmp.name, source_name=original_name)
         except ValueError as e:
             # Unsupported file type — surface the message verbatim to the UI.
             raise HTTPException(status_code=400, detail=str(e))
@@ -92,9 +94,6 @@ async def ingest(file: UploadFile = File(...)):
             # Most commonly: OPENAI_API_KEY missing.
             raise HTTPException(status_code=500, detail=str(e))
 
-        # ingest_file stamps the temp file's basename onto summary["filename"].
-        # The frontend wants the user-facing original name back.
-        summary["filename"] = original_name
         return summary
     finally:
         # Always clean up the temp file, even on error.
