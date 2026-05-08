@@ -1,0 +1,23 @@
+# --- Core LangChain pieces -------------------------------------------------
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-community>=0.3.0
+langchain-text-splitters>=0.3.0
+langchain-openai>=0.2.0
+langchain-chroma>=0.1.4
+
+# --- Vector store ----------------------------------------------------------
+chromadb>=0.5.0
+
+# --- File-format loaders ---------------------------------------------------
+pypdf>=4.0.0          # used by PyPDFLoader
+docx2txt>=0.8         # used by Docx2txtLoader
+
+# --- API server ------------------------------------------------------------
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9   # required by FastAPI for file uploads
+python-dotenv>=1.0.0      # so .env is auto-loaded by the API
+
+# --- OpenAI SDK (langchain-openai pulls this in too, pinned for clarity) --
+openai>=1.50.0

@@ -1,0 +1,46 @@
+# --- Secrets ---------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# --- Python ---------------------------------------------------------------
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Vector store (regenerated on ingest, can be very large) --------------
+vector_store/
+
+# --- Node / Vite / TypeScript --------------------------------------------
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# --- IDE / editor --------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+.claude/
+
+# --- OS junk -------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Personal notes (kept on disk, never committed) ----------------------
+Progress.docx
+
+# --- Logs ----------------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
