@@ -182,7 +182,7 @@ export default function App() {
                   <Database className="w-5 h-5 text-brand-cyan" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-display font-bold text-brand-cyan tracking-tight leading-none">ArchAI</h1>
+                  <h1 className="text-xl font-display font-bold text-brand-cyan tracking-tight leading-none">DocWhisperer</h1>
                   <span className="text-[10px] font-mono text-on-surface-variant opacity-60">V1.0.42-STABLE</span>
                 </div>
               </div>
@@ -235,7 +235,7 @@ export default function App() {
                 </div>
               </button>
             )}
-            <h2 className="text-lg font-semibold text-brand-cyan tracking-tight">RAG Command Center</h2>
+            <h2 className="text-lg font-semibold text-brand-cyan tracking-tight">DocWhisperer</h2>
             <div className="flex items-center gap-2 px-3 py-1 bg-brand-cyan/5 border border-brand-cyan/20 rounded-full h-fit">
               <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
               <span className="text-[10px] font-mono text-brand-cyan font-bold uppercase tracking-widest">System: Online</span>
@@ -273,7 +273,7 @@ export default function App() {
                   ) : (
                     <>
                       <Sparkles size={14} className="text-brand-cyan" />
-                      <span className="text-[11px] font-mono font-bold text-brand-cyan uppercase tracking-widest">ARCHAI ENGINE</span>
+                      <span className="text-[11px] font-mono font-bold text-brand-cyan uppercase tracking-widest">DOCWHISPERER</span>
                     </>
                   )}
                   <div className="h-[1px] flex-1 bg-white/5" />

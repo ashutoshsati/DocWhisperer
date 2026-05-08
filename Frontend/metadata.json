@@ -1,6 +1,6 @@
 {
-  "name": "ArchAI",
-  "description": "Technical RAG Command Center for high-performance AI interactions, featuring glassmorphic UI and multi-source citation tracking.",
+  "name": "DocWhisperer",
+  "description": "DocWhisperer — a RAG chatbot that answers questions grounded in your uploaded documents, with inline citations back to the source chunks.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

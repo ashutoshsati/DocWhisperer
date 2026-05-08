@@ -30,6 +30,10 @@ coverage/
 .idea/
 *.swp
 .claude/
+.playwright-mcp/
+
+# --- MS Office lockfiles (created when a .docx is open in Word) ---------
+~$*
 
 # --- OS junk -------------------------------------------------------------
 .DS_Store
