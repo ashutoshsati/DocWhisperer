@@ -18,6 +18,7 @@ import os
 import tempfile
 from pathlib import Path
 
+import chromadb
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,7 +28,7 @@ from pydantic import BaseModel, Field
 # only when their functions are called, but loading early keeps surprises low.
 load_dotenv()
 
-from Backend.ingest import ingest_file
+from Backend.ingest import COLLECTION_NAME, PERSIST_DIRECTORY, ingest_file
 from Backend.query import answer_query
 
 
@@ -115,3 +116,23 @@ def query(req: QueryRequest):
     except RuntimeError as e:
         # Missing API key, etc.
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/reset")
+def reset():
+    """
+    Wipe every chunk from the ChromaDB collection. The next /ingest call
+    lazily re-creates the collection inside the same persist directory.
+    Backs the frontend's "New Session" button.
+    """
+    print("[api] /reset received")
+    client = chromadb.PersistentClient(path=PERSIST_DIRECTORY)
+    try:
+        client.delete_collection(name=COLLECTION_NAME)
+        print(f"[api] /reset: deleted collection {COLLECTION_NAME!r}")
+    except Exception as e:
+        # Most commonly: collection doesn't exist yet (fresh install, no
+        # ingest has run). Post-condition ("collection is empty") is already
+        # met, so swallow and report success.
+        print(f"[api] /reset: nothing to delete ({type(e).__name__}: {e})")
+    return {"ok": True}

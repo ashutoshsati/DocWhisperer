@@ -71,8 +71,11 @@ export default function App() {
   // Request-in-flight flags so we can disable buttons and show a "thinking" indicator.
   const [isSending, setIsSending] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   // Most recent network error (e.g. backend not running). Shown above the input.
   const [error, setError] = useState<string | null>(null);
+  // Whether the "New Session" confirmation modal is open.
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Hidden <input type="file"> reference — the styled "ADD DOCUMENT" button triggers it.
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -163,6 +166,26 @@ export default function App() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Wipe the backend's vector store and clear all client-side session state.
+  // Triggered from the "New Session" confirmation modal.
+  const handleReset = async () => {
+    setIsResetting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/reset`, { method: 'POST' });
+      if (!res.ok) throw new Error(`Backend returned ${res.status}`);
+      setChatMessages([]);
+      setSources([]);
+      setShowResetConfirm(false);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      setError(`Reset failed: ${msg}. Is the FastAPI backend running at ${API_URL}?`);
+      setShowResetConfirm(false);
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-brand-bg text-on-surface font-sans">
       {/* Sidebar */}
@@ -184,7 +207,10 @@ export default function App() {
                 </div>
               </div>
 
-              <button className="mt-8 w-full group relative flex items-center justify-center gap-2 py-3 px-4 bg-brand-cyan text-brand-bg font-bold rounded-lg overflow-hidden transition-all hover:scale-[1.02] active:scale-95 glow-cyan">
+              <button
+                onClick={() => setShowResetConfirm(true)}
+                className="mt-8 w-full group relative flex items-center justify-center gap-2 py-3 px-4 bg-brand-cyan text-brand-bg font-bold rounded-lg overflow-hidden transition-all hover:scale-[1.02] active:scale-95 glow-cyan"
+              >
                 <Plus className="w-4 h-4" />
                 <span>New Session</span>
                 <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
@@ -457,6 +483,48 @@ export default function App() {
           </div>
         </div>
       </main>
+
+      {/* "New Session" confirmation modal — wipes the backend vector store and clears UI state. */}
+      <AnimatePresence>
+        {showResetConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => !isResetting && setShowResetConfirm(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="glass-panel rounded-2xl p-6 w-full max-w-md mx-4"
+            >
+              <h3 className="text-lg font-display font-bold text-brand-cyan mb-3">Start a new session?</h3>
+              <p className="text-sm text-on-surface-variant leading-relaxed mb-6">
+                This will permanently delete all uploaded documents and clear the chat. This cannot be undone.
+              </p>
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  disabled={isResetting}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-on-surface-variant hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReset}
+                  disabled={isResetting}
+                  className="px-4 py-2 rounded-lg text-sm font-bold bg-brand-cyan text-brand-bg glow-cyan hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isResetting ? 'Resetting...' : 'Reset Session'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
