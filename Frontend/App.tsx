@@ -458,7 +458,7 @@ export default function App() {
                     }
                   }}
                   placeholder="Type your query to the knowledge base..."
-                  className="w-full bg-transparent border-none focus:ring-0 text-base resize-none py-2 max-h-48 custom-scrollbar placeholder:text-on-surface-variant/30"
+                  className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-base resize-none py-2 max-h-48 custom-scrollbar placeholder:text-on-surface-variant/30"
                   rows={1}
                   disabled={isSending}
                 />
