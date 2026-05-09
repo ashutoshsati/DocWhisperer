@@ -186,7 +186,7 @@ def answer_query(query: str) -> dict:
     # Short-circuit: no docs ingested yet (or none matched).
     if not chunks:
         return {
-            "answer": "No documents have been ingested yet — upload one first using POST /ingest.",
+            "answer": "No documents have been ingested yet — upload one and ask away!",
             "sources": [],
             "usage": empty_usage,
         }

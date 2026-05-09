@@ -15,7 +15,6 @@ import {
   History, 
   Copy, 
   Check,
-  Search,
   FileText,
   ChevronRight
 } from 'lucide-react';
@@ -317,10 +316,6 @@ export default function App() {
               <span className="text-[10px] font-mono text-brand-cyan font-bold uppercase tracking-widest">System: Online</span>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <HeaderAction icon={<Search size={20} />} />
-          </div>
         </header>
 
         {/* Chat Scroll Container */}
@@ -559,14 +554,6 @@ function SidebarItem({ icon, label, active = false }: { icon: ReactNode, label: 
       <span className="text-sm font-medium">{label}</span>
       {active && <div className="ml-auto w-1 h-1 rounded-full bg-brand-cyan" />}
     </div>
-  );
-}
-
-function HeaderAction({ icon }: { icon: ReactNode }) {
-  return (
-    <button className="p-2 text-on-surface-variant hover:text-brand-cyan hover:bg-brand-cyan/5 rounded-lg transition-all">
-      {icon}
-    </button>
   );
 }
 
