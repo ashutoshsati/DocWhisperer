@@ -27,5 +27,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY Backend/ ./Backend/
 COPY --from=frontend /fe/dist ./Frontend/dist
 
-EXPOSE 80
-CMD ["uvicorn", "Backend.main:app", "--host", "0.0.0.0", "--port", "80"]
+# Run as non-root UID 1000 ("user") — required by Hugging Face Spaces and
+# good practice elsewhere. Give that user ownership of /app so vector_store/
+# is writable at runtime.
+RUN useradd -m -u 1000 user && chown -R user:user /app
+USER user
+
+# Listen on 7860 inside the container — HF Spaces' Docker SDK expects this.
+# For local docker-compose we publish host:80 -> container:7860.
+EXPOSE 7860
+CMD ["uvicorn", "Backend.main:app", "--host", "0.0.0.0", "--port", "7860"]
