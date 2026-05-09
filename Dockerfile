@@ -7,6 +7,10 @@ COPY Frontend/ ./
 # Empty VITE_API_URL -> frontend uses relative URLs (/query, /ingest, /reset).
 # Same-origin requests -> no CORS, works behind any host or IP.
 ENV VITE_API_URL=""
+# APP_TOKEN comes in as a build arg (HF Spaces "Variables" are passed as build
+# args; locally pass via --build-arg APP_TOKEN=...). Empty default -> auth off.
+ARG APP_TOKEN=""
+ENV VITE_APP_TOKEN=$APP_TOKEN
 RUN npm run build
 
 # Stage 2: Python backend, with the built SPA bundled in

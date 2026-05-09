@@ -20,7 +20,7 @@ from pathlib import Path
 
 import chromadb
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -48,6 +48,26 @@ app.add_middleware(
 )
 
 
+# --- Auth + upload limits --------------------------------------------------
+
+# Shared secret protecting /ingest and /reset (so random visitors can't burn
+# embedding tokens or wipe the store). /query stays public so the chatbot is
+# usable. If unset, auth is disabled — fine for local dev.
+APP_TOKEN = os.environ.get("APP_TOKEN", "").strip()
+if not APP_TOKEN:
+    print("[api] WARNING: APP_TOKEN not set — /ingest and /reset are unprotected")
+
+MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB hard cap on /ingest
+
+
+def require_token(x_auth: str | None = Header(default=None)):
+    """Reject requests whose X-Auth header doesn't match APP_TOKEN."""
+    if not APP_TOKEN:
+        return  # auth disabled
+    if x_auth != APP_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid or missing X-Auth header")
+
+
 # --- Request / response models --------------------------------------------
 
 class QueryRequest(BaseModel):
@@ -63,7 +83,7 @@ def healthz():
     return {"status": "ok", "service": "rag-chatbot"}
 
 
-@app.post("/ingest")
+@app.post("/ingest", dependencies=[Depends(require_token)])
 async def ingest(file: UploadFile = File(...)):
     """
     Accept one uploaded document, run it through the ingestion pipeline, and
@@ -80,6 +100,11 @@ async def ingest(file: UploadFile = File(...)):
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
     try:
         contents = await file.read()
+        if len(contents) > MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large ({len(contents) // (1024 * 1024)} MB); 20 MB limit.",
+            )
         tmp.write(contents)
         tmp.close()
 
@@ -119,7 +144,7 @@ def query(req: QueryRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/reset")
+@app.post("/reset", dependencies=[Depends(require_token)])
 def reset():
     """
     Wipe every chunk from the ChromaDB collection. The next /ingest call

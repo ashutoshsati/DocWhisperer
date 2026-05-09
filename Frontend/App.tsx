@@ -24,6 +24,11 @@ import { motion, AnimatePresence } from 'motion/react';
 // Default points at a locally running FastAPI server (uvicorn Backend.main:app --port 8000).
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000';
 
+// Shared secret sent as X-Auth on /ingest and /reset. Baked into the bundle at
+// build time from VITE_APP_TOKEN. Empty in local dev (backend allows empty too).
+const APP_TOKEN = (import.meta.env.VITE_APP_TOKEN as string | undefined) ?? '';
+const authHeaders: Record<string, string> = APP_TOKEN ? { 'X-Auth': APP_TOKEN } : {};
+
 // Tiny helper: format the current wall-clock time as HH:MM (e.g. "14:23") for chat timestamps.
 function nowHHMM() {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -153,7 +158,7 @@ export default function App() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch(`${API_URL}/ingest`, { method: 'POST', body: formData });
+      const res = await fetch(`${API_URL}/ingest`, { method: 'POST', body: formData, headers: authHeaders });
       if (!res.ok) throw new Error(`Backend returned ${res.status}`);
       const data = (await res.json()) as { filename?: string; chunks?: number };
 
@@ -188,7 +193,7 @@ export default function App() {
     setIsResetting(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/reset`, { method: 'POST' });
+      const res = await fetch(`${API_URL}/reset`, { method: 'POST', headers: authHeaders });
       if (!res.ok) throw new Error(`Backend returned ${res.status}`);
       setChatMessages([]);
       setSources([]);
