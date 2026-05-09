@@ -22,6 +22,7 @@ import chromadb
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 # Load .env BEFORE importing the pipeline modules — they read OPENAI_API_KEY
@@ -56,9 +57,9 @@ class QueryRequest(BaseModel):
 
 # --- Routes ----------------------------------------------------------------
 
-@app.get("/")
-def root():
-    """Tiny healthcheck so a browser hit on http://localhost:8000 shows life."""
+@app.get("/healthz")
+def healthz():
+    """Tiny healthcheck endpoint."""
     return {"status": "ok", "service": "rag-chatbot"}
 
 
@@ -136,3 +137,10 @@ def reset():
         # met, so swallow and report success.
         print(f"[api] /reset: nothing to delete ({type(e).__name__}: {e})")
     return {"ok": True}
+
+
+# Serve the built React SPA from / when the bundle is present (Docker / prod).
+# Skipped in local dev where Vite serves the frontend on :3000 instead.
+_dist = Path(__file__).resolve().parent.parent / "Frontend" / "dist"
+if _dist.is_dir():
+    app.mount("/", StaticFiles(directory=str(_dist), html=True), name="spa")

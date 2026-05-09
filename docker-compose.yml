@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    image: rag-chatbot:latest
+    container_name: rag-chatbot
+    ports:
+      - "80:80"
+    env_file: ./.env
+    volumes:
+      # Persist ChromaDB across container restarts and rebuilds
+      - ./vector_store:/app/vector_store
+    restart: unless-stopped

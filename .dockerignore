@@ -1,0 +1,42 @@
+# Local virtualenvs and IDE / tooling state
+.venv/
+venv/
+.git/
+.github/
+.vscode/
+.idea/
+.claude/
+.playwright-mcp/
+
+# Node build artifacts (we run npm ci inside the image)
+Frontend/node_modules/
+Frontend/dist/
+Frontend/.vite/
+
+# Python caches and build artifacts
+**/__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Persistent state — bind-mounted at runtime, must not be baked into image
+vector_store/
+
+# Secrets — supplied via env_file at runtime, must never enter the image
+.env
+.env.*
+!.env.example
+
+# Docs and notes — not needed at runtime
+docs/
+*.md
+*.log
+~$*
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
