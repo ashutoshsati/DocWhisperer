@@ -46,12 +46,11 @@ If you want the long-form walkthrough — every file, every flow, every diagram 
 
 ## Screenshots
 
-> _TODO: add screenshots of the chat UI, sources panel, and a citation in action._
+![Chat interface](docs/screenshots/chat-interface.png)
 
-<!--
-![Chat with citations](docs/screenshots/chat.png)
-![Sources panel](docs/screenshots/sources.png)
--->
+![Sources panel](docs/screenshots/sidebar.png)
+
+![Example conversation](docs/screenshots/example-conversation.png)
 
 ## Quickstart (local)
 
